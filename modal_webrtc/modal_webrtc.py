@@ -5,6 +5,8 @@ import queue
 from abc import ABC, abstractmethod
 from typing import Optional
 
+import shortuuid
+
 import modal
 from fastapi import FastAPI, WebSocket
 from fastapi.websockets import WebSocketState
@@ -12,6 +14,7 @@ from fastapi.websockets import WebSocketState
 from aiortc import RTCConfiguration, RTCIceServer, RTCPeerConnection, RTCSessionDescription
 from aiortc import RTCIceCandidate
 from aiortc.sdp import candidate_from_sdp
+
 
 class ModalWebRtcPeer(ABC):
     """
@@ -39,7 +42,7 @@ class ModalWebRtcPeer(ABC):
 
     @modal.enter()
     async def _initialize(self):
-        import shortuuid
+        
 
         self.id = shortuuid.uuid()
         self.pcs = {}
