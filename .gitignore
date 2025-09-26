@@ -1,0 +1,10 @@
+**/__pycache__
+.DS_Store
+.vscode
+
+venv
+.venv
+
+# secrets file for act, tool for local GitHub Actions testing
+.secrets
+
