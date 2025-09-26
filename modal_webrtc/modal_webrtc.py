@@ -9,6 +9,10 @@ import modal
 from fastapi import FastAPI, WebSocket
 from fastapi.websockets import WebSocketState
 
+from aiortc import RTCConfiguration, RTCIceServer, RTCPeerConnection, RTCSessionDescription
+from aiortc import RTCIceCandidate
+from aiortc.sdp import candidate_from_sdp
+
 class ModalWebRtcPeer(ABC):
     """
     Base class for implementing WebRTC peer connections in Modal using aiortc.
@@ -61,7 +65,7 @@ class ModalWebRtcPeer(ABC):
 
     async def _setup_peer_connection(self, peer_id):
         """Creates an RTC peer connection via an ICE server"""
-        from aiortc import RTCConfiguration, RTCIceServer, RTCPeerConnection
+        
 
         # aiortc automatically uses google's STUN server,
         # but we can also specify our own
@@ -151,7 +155,6 @@ class ModalWebRtcPeer(ABC):
 
     async def handle_offer(self, peer_id, msg):
         """Handles a peers SDP offer message by producing an SDP answer."""
-        from aiortc import RTCSessionDescription
 
         print(f"{self.id}:  handling SDP offer from {peer_id}...")
 
@@ -171,7 +174,6 @@ class ModalWebRtcPeer(ABC):
 
     async def handle_ice_candidate(self, peer_id, msg):
         """Add an ICE candidate sent by a peer."""
-        from aiortc import RTCIceCandidate
         from aiortc.sdp import candidate_from_sdp
 
         candidate = msg.get("candidate")
@@ -214,7 +216,6 @@ class ModalWebRtcPeer(ABC):
         return {"sdp": sdp, "type": offer.type, "peer_id": self.id}
 
     async def handle_answer(self, peer_id, answer):
-        from aiortc import RTCSessionDescription
 
         print(f"{self.id}:  handling answer from {peer_id}...")
         # set remote peer description
