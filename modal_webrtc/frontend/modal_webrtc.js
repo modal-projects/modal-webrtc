@@ -18,13 +18,11 @@ export class ModalWebRtcClient extends EventTarget {
     }
 
     // Get webcam media stream
-    async startWebcam(include_audio=false) {
+    async startWebcam(video_constraints,audio_constraints) {
         try {
             this.localStream = await navigator.mediaDevices.getUserMedia({ 
-                video: {
-                    facingMode: { ideal: "environment" }
-                }, 
-                audio: include_audio
+                video: video_constraints,
+                audio: audio_constraints
             });
             this.dispatchEvent(new CustomEvent('localStream', { 
                 detail: { stream: this.localStream }
@@ -42,7 +40,7 @@ export class ModalWebRtcClient extends EventTarget {
     // Create and set up peer connection
     async startStreaming() {
         this.peerID = this.generateShortUUID();
-        this.updateStatus('Spwaning Modal WebRTC peer (this can take awhile if no container is warm)...');
+        this.updateStatus('Spwaning Modal WebRTC peer (this can take a moment if no container is warm or models need to load)...');
         await this.negotiate();
     }
 
