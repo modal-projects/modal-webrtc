@@ -31,10 +31,13 @@ class ModalWebRtcPeer(ABC):
     - setup_streams(): Implementation for setting up media tracks and streams
 
     Optional methods to override:
-    - initialize(): Custom initialization logic when peer is created
+    - initialize_container(): Custom initialization logic when container is created
+    - initialize_peer(): Custom initialization logic when peer is created
     - run_streams(): Implementation for stream runtime logic
     - get_turn_servers(): Implementation to provide custom TURN server configuration
-    - exit(): Custom cleanup logic when peer is shutting down
+    - shutdown_peer(): Custom cleanup logic when peer is shutting down
+    - exit_container(): Custom cleanup logic when container is shutting down
+    
 
     The peer connection is established through a ModalWebRtcSignalingServer that manages
     the signaling process between this peer and client peers.
@@ -49,10 +52,14 @@ class ModalWebRtcPeer(ABC):
         self.pending_candidates = {}
 
         # call custom init logic
-        await self.initialize()
+        await self.initialize_container()
 
-    async def initialize(self):
+    async def initialize_container(self):
         """Override to add custom logic when creating a peer"""
+
+    async def initialize_peer(self, peer_id):
+        """Override to add custom logic when initializing a peer"""
+        pass
 
     @abstractmethod
     async def setup_streams(self, peer_id):
@@ -92,9 +99,6 @@ class ModalWebRtcPeer(ABC):
         await self._connect_over_queue(q, peer_id)
         await self._run_streams(peer_id)
 
-    async def initialize_peer(self, peer_id):
-        """Override to add custom logic when initializing a peer"""
-        pass
 
     async def _connect_over_queue(self, q, peer_id):
         """Connect this peer to another by passing messages along a Modal Queue."""
@@ -153,7 +157,7 @@ class ModalWebRtcPeer(ABC):
             await asyncio.sleep(0.1)
 
         print(f"{self.id}:  ending streaming to {peer_id}")
-        await self.exit(peer_id)
+        await self.shutdown_peer(peer_id)
         print(f"{self.id}:  cleaned up peer connection to {peer_id}")
 
     async def handle_offer(self, peer_id, msg):
@@ -229,15 +233,18 @@ class ModalWebRtcPeer(ABC):
     @modal.exit()
     async def _exit(self):
         print(f"{self.id}: Shutting down...")
-        await self.exit()
+        await self.exit_container()
 
         if self.pcs:
             print(f"{self.id}: Closing peer connections...")
             await asyncio.gather(*[pc.close() for pc in self.pcs.values()])
             self.pcs = {}
 
-    async def exit(self):
+    async def exit_container(self):
         """Override with any custom logic when shutting down container."""
+
+    async def shutdown_peer(self, peer_id):
+        """Override with any custom logic when shutting down peer."""
 
 
 class ModalWebRtcSignalingServer:
