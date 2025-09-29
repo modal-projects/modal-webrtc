@@ -97,8 +97,8 @@ class ModalWebRtcPeer(ABC):
 
         await self.initialize_peer(peer_id)
         await self._connect_over_queue(q, peer_id)
-        
-        await self._run_streams(peer_id)
+        await self._run_streams(peer_id)        
+        await self._shutdown_peer(peer_id)
 
 
     async def _connect_over_queue(self, q, peer_id):
@@ -126,7 +126,7 @@ class ModalWebRtcPeer(ABC):
                     print(f"...closing state: {self.pcs[peer_id].connectionState}")
                     await q.put.aio("close", partition="server")
                     await self._shutdown_peer(peer_id)
-                    break
+                    return
 
                 
                 # dispatch the message to its handler
@@ -161,9 +161,6 @@ class ModalWebRtcPeer(ABC):
         while self.pcs[peer_id].connectionState == "connected":
             await asyncio.sleep(0.1)
 
-        print(f"{self.id}:  ending streaming to {peer_id}")
-        await self._shutdown_peer(peer_id)
-        print(f"{self.id}:  cleaned up peer connection to {peer_id}")
 
     async def handle_offer(self, peer_id, msg):
         """Handles a peers SDP offer message by producing an SDP answer."""
@@ -256,7 +253,7 @@ class ModalWebRtcPeer(ABC):
         """Override with any custom logic when shutting down peer."""
 
     async def _shutdown_peer(self, peer_id):
-
+        print(f"{self.id}:  shutting down peer connection to {peer_id}")
         await self.shutdown_peer(peer_id)
         if self.pcs.get(peer_id):
             try:
