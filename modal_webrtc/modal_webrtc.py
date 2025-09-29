@@ -354,6 +354,7 @@ async def relay_websocket_to_queue(websocket: WebSocket, q: modal.Queue, peer_id
                 websocket.client_state,
             ]:
                 print("WS>Q relay: Websocket connection closed")
+                await q.put.aio(json.dumps({"type": "close", "peer_id": peer_id}), partition=peer_id)
                 return
             else:
                 print(f"WS>Q relay: Error relaying from websocket to queue: {type(e)}: {e}")
@@ -380,6 +381,7 @@ async def relay_queue_to_websocket(websocket: WebSocket, q: modal.Queue, peer_id
                 websocket.client_state,
             ]:
                 print("Q>WS relay: Websocket connection closed")
+                await q.put.aio(json.dumps({"type": "close", "peer_id": peer_id}), partition=peer_id)
                 return
             else:
                 print(f"Server: Error relaying from queue to websocket: {type(e)}: {e}")
