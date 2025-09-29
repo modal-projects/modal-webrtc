@@ -98,6 +98,7 @@ class ModalWebRtcPeer(ABC):
         await self.initialize_peer(peer_id)
         await self._connect_over_queue(q, peer_id)
         if self.pcs.get(peer_id): # we successfully setup the peer and are connected or connecting
+            print(f"{self.id}:  Running streams to {peer_id}")
             await self._run_streams(peer_id)        
             await self._shutdown_peer(peer_id)
 
@@ -264,6 +265,7 @@ class ModalWebRtcPeer(ABC):
             self.pcs[peer_id] = None
         if self.pending_candidates.get(peer_id):
             self.pending_candidates[peer_id] = []
+        print(f"{self.id}:  Shut down peer connection to {peer_id}")
            
 
 class ModalWebRtcSignalingServer:
