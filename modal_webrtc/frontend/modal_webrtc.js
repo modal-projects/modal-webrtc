@@ -71,7 +71,6 @@ export class ModalWebRtcClient extends EventTarget {
                     this.iceServers = msg.ice_servers;
                 } else if (msg.type === 'close') {
                     this.updateStatus('Received close message from server');
-                    this.dispatchEvent(new CustomEvent('websocketClosed'));
                     this.stopStreaming();
                 } else {
                     console.error('Unexpected response from server:', msg);

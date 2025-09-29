@@ -119,8 +119,8 @@ class ModalWebRtcPeer(ABC):
                 
                 if (self.pcs.get(peer_id) and (
                     self.pcs[peer_id].connectionState
-                    in ["connected", "closed", "failed"]) or msg.get("type") == "close"
-                ):
+                    in ["connected", "closed", "failed"])
+                ) or msg.get("type") == "close":
                     print(f"{self.id}: Closing connection to {peer_id} over queue...")
                     print(f"...closing state: {self.pcs[peer_id].connectionState}")
                     await q.put.aio("close", partition="server")
