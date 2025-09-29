@@ -97,7 +97,8 @@ class ModalWebRtcPeer(ABC):
 
         await self.initialize_peer(peer_id)
         await self._connect_over_queue(q, peer_id)
-        await self._run_streams(peer_id)        
+        if self.pcs.get(peer_id): # we successfully setup the peer and are connected or connecting
+            await self._run_streams(peer_id)        
         await self._shutdown_peer(peer_id)
 
 
@@ -125,7 +126,7 @@ class ModalWebRtcPeer(ABC):
                     print(f"{self.id}: Closing connection to {peer_id} over queue...")
                     print(f"...closing state: {self.pcs[peer_id].connectionState}")
                     await q.put.aio("close", partition="server")
-                    await self._shutdown_peer(peer_id)
+                    # await self._shutdown_peer(peer_id)
                     return
 
                 
