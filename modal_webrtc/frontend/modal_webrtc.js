@@ -69,6 +69,10 @@ export class ModalWebRtcClient extends EventTarget {
                     this.peerConnection.setRemoteDescription(msg);
                 } else if (msg.type === 'turn_servers') {
                     this.iceServers = msg.ice_servers;
+                } else if (msg.type === 'close') {
+                    this.updateStatus('Received close message from server');
+                    this.dispatchEvent(new CustomEvent('websocketClosed'));
+                    this.stopStreaming();
                 } else {
                     console.error('Unexpected response from server:', msg);
                 }
@@ -219,8 +223,11 @@ export class ModalWebRtcClient extends EventTarget {
             await this.peerConnection.close();
             this.peerConnection = null;
         }
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            await this.ws.close();
+        if (this.ws) { 
+            if (this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(JSON.stringify({type: 'close', peer_id: this.peerID}));
+                await this.ws.close();
+            }
             this.ws = null;
         }
         this.dispatchEvent(new CustomEvent('cleanup'));

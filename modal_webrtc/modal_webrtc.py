@@ -112,18 +112,21 @@ class ModalWebRtcPeer(ABC):
 
         while True:
             try:
-                if self.pcs.get(peer_id) and (
-                    self.pcs[peer_id].connectionState
-                    in ["connected", "closed", "failed"]
-                ):
-                    print(f"{self.id}: Closing connection to {peer_id} over queue...")
-                    print(f"...closing state: {self.pcs[peer_id].connectionState}")
-                    q.put("close", partition="server")
-                    break
 
                 # read and parse websocket message passed over queue
                 msg = json.loads(await q.get.aio(partition=peer_id, timeout=1.0))
                 print(f"{self.id}: Received message from {peer_id}: {msg.get("type")}")
+                
+                if (self.pcs.get(peer_id) and (
+                    self.pcs[peer_id].connectionState
+                    in ["connected", "closed", "failed"]) or msg.get("type") == "close"
+                ):
+                    print(f"{self.id}: Closing connection to {peer_id} over queue...")
+                    print(f"...closing state: {self.pcs[peer_id].connectionState}")
+                    await q.put.aio("close", partition="server")
+                    break
+
+                
                 # dispatch the message to its handler
                 if handler := msg_handlers.get(msg.get("type")):
                     response = await handler(peer_id, msg)
@@ -197,6 +200,10 @@ class ModalWebRtcPeer(ABC):
         ice_candidate.sdpMid = candidate["sdpMid"]
         ice_candidate.sdpMLineIndex = candidate["sdpMLineIndex"]
 
+        # if not self.pcs.get(peer_id) or (
+        #     self.pcs[peer_id].connectionState
+        #     not in ["connected", "closed", "failed"]
+        # ):
         if not self.pcs.get(peer_id):
             self.pending_candidates[peer_id].append(ice_candidate)
         else:
