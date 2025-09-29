@@ -97,6 +97,7 @@ class ModalWebRtcPeer(ABC):
 
         await self.initialize_peer(peer_id)
         await self._connect_over_queue(q, peer_id)
+        
         await self._run_streams(peer_id)
 
 
@@ -124,6 +125,7 @@ class ModalWebRtcPeer(ABC):
                     print(f"{self.id}: Closing connection to {peer_id} over queue...")
                     print(f"...closing state: {self.pcs[peer_id].connectionState}")
                     await q.put.aio("close", partition="server")
+                    await self._shutdown_peer(peer_id)
                     break
 
                 
@@ -160,7 +162,7 @@ class ModalWebRtcPeer(ABC):
             await asyncio.sleep(0.1)
 
         print(f"{self.id}:  ending streaming to {peer_id}")
-        await self.shutdown_peer(peer_id)
+        await self._shutdown_peer(peer_id)
         print(f"{self.id}:  cleaned up peer connection to {peer_id}")
 
     async def handle_offer(self, peer_id, msg):
@@ -253,6 +255,18 @@ class ModalWebRtcPeer(ABC):
     async def shutdown_peer(self, peer_id):
         """Override with any custom logic when shutting down peer."""
 
+    async def _shutdown_peer(self, peer_id):
+
+        await self.shutdown_peer(peer_id)
+        if self.pcs.get(peer_id):
+            try:
+                await self.pcs[peer_id].close()
+            except Exception as e:
+                print(f"{self.id}: Error closing peer connection to {peer_id}: {type(e)}: {e}")
+            self.pcs[peer_id] = None
+        if self.pending_candidates.get(peer_id):
+            self.pending_candidates[peer_id] = []
+           
 
 class ModalWebRtcSignalingServer:
     """
