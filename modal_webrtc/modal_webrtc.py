@@ -116,16 +116,22 @@ class ModalWebRtcPeer(ABC):
         while True:
             try:
 
+                if (self.pcs.get(peer_id) and (
+                    self.pcs[peer_id].connectionState
+                    in ["connected", "closed", "failed"])
+                ):
+                    print(f"{self.id}: Closing connection to {peer_id} over queue...") 
+                    print(f"...closing state: {self.pcs[peer_id].connectionState}")
+                    await q.put.aio("close", partition="server")
+                    return
+
                 # read and parse websocket message passed over queue
                 msg = json.loads(await q.get.aio(partition=peer_id, timeout=1.0))
                 print(f"{self.id}: Received message from {peer_id}: {msg.get("type")}")
                 
-                if (self.pcs.get(peer_id) and (
-                    self.pcs[peer_id].connectionState
-                    in ["connected", "closed", "failed"])
-                ) or msg.get("type") == "close":
-                    print(f"{self.id}: Closing connection to {peer_id} over queue...")
-                    print(f"...closing state: {self.pcs[peer_id].connectionState}")
+                if msg.get("type") == "close":
+                    
+                    print(f"Close signal received, shutting down peer connection to {peer_id}")
                     await q.put.aio("close", partition="server")
                     await self._shutdown_peer(peer_id)
                     return
